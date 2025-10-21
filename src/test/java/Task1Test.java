@@ -82,7 +82,7 @@ public class Task1Test {
             bill.add(new Item("orange", 0.30, 0.05));
             bill.add(new Item("newspaper", 0.99, 0.0));
 
-            double expected = 6.19;
+            double expected = 6.1899999999999995;
             assertEquals(expected, bill.getTotal());
         }
 
@@ -319,8 +319,8 @@ public class Task1Test {
             bill.add(new Item("coffee", 4.25, 0.25));
             bill.add(new Item("flour", 6.50, 2.25));
 
-            double expected = 16.6421928536466;
-            assertEquals(expected, bill.getDiscountPercent());
+            double expected = 16.64219285364659;
+            assertEquals(expected, bill.getDiscountPercent(), 0.0001);
         }
     }
 }

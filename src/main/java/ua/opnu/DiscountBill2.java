@@ -3,15 +3,15 @@ package ua.opnu;
 import ua.opnu.java.inheritance.bill.Employee;
 import ua.opnu.java.inheritance.bill.Item;
 
+import java.math.BigDecimal; // <-- ИМПОРТ
+import java.math.RoundingMode; // <-- ИМПОРТ
 import java.util.ArrayList;
 
 public class DiscountBill2 {
 
-    // Чи є клієнт постійним
+
     boolean regularCustomer;
-    // Список товарів
     ArrayList<Item> items = new ArrayList<>();
-    // Працівник, який оформлює рахунок
     Employee clerk;
 
     public DiscountBill2(Employee clerk, boolean regularCustomer) {
@@ -19,31 +19,44 @@ public class DiscountBill2 {
         this.regularCustomer = regularCustomer;
     }
 
-    // Повертає працівника
     public Employee getClerk() {
         return clerk;
     }
 
-    // Додає товар у список
     public void add(Item i) {
         items.add(i);
     }
 
-    // Повертає загальну суму (з урахуванням знижки)
-    public double getTotal() {
-        double price = 0;
-        double discount = 0;
 
+    private BigDecimal calculateTotalPrice() {
+        BigDecimal totalPrice = BigDecimal.ZERO;
         for (Item item : items) {
-            price += item.getPrice();
-            if (regularCustomer) discount += item.getDiscount();
+            totalPrice = totalPrice.add(BigDecimal.valueOf(item.getPrice()));
         }
-
-        if (regularCustomer) return price - discount;
-        return price;
+        return totalPrice;
     }
 
-    // Кількість товарів зі знижкою
+    private BigDecimal calculateTotalDiscount() {
+        if (!regularCustomer) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal totalDiscount = BigDecimal.ZERO;
+        for (Item item : items) {
+            totalDiscount = totalDiscount.add(BigDecimal.valueOf(item.getDiscount()));
+        }
+        return totalDiscount;
+    }
+
+    public double getTotal() {
+        BigDecimal price = calculateTotalPrice();
+        BigDecimal discount = calculateTotalDiscount(); // Уже учитывает, постоянный ли клиент
+
+        BigDecimal total = price.subtract(discount);
+
+        return total.setScale(2, RoundingMode.HALF_UP).doubleValue();
+    }
+
     public int getDiscountCount() {
         int count = 0;
         if (regularCustomer) {
@@ -54,25 +67,31 @@ public class DiscountBill2 {
         return count;
     }
 
-    // Загальна сума знижки
     public double getDiscountAmount() {
-        double totalDiscount = 0;
-        if (regularCustomer) {
-            for (Item item : items) {
-                totalDiscount += item.getDiscount();
-            }
-        }
-        return totalDiscount;
+        BigDecimal totalDiscount = calculateTotalDiscount();
+
+        return totalDiscount.setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
     // Відсоток знижки від загальної ціни
     public double getDiscountPercent() {
-        if (regularCustomer) {
-            double totalPrice = 0;
-            for (Item item : items) totalPrice += item.getPrice();
-            return (getDiscountAmount() * 100) / totalPrice;
-        }
-        return 0;
-    }
+        BigDecimal totalPrice = calculateTotalPrice();
+        BigDecimal totalDiscount = calculateTotalDiscount();
 
+        // Проверка деления на ноль
+        if (totalPrice.compareTo(BigDecimal.ZERO) == 0) {
+            return 0.0;
+        }
+
+        BigDecimal hundred = new BigDecimal("100");
+
+
+        int divisionScale = 15;
+        RoundingMode rounding = RoundingMode.HALF_UP;
+
+        BigDecimal percent = totalDiscount.multiply(hundred)
+                .divide(totalPrice, divisionScale, rounding);
+
+        return percent.doubleValue();
+    }
 }
